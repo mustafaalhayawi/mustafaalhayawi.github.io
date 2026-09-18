@@ -1,0 +1,24 @@
+baseURL = 'https://mustafaalhayawi.com/'
+languageCode = 'en-us'
+title = 'Mustafa Al Hayawi'
+theme = 'cactus'
+
+[params]
+  colortheme = 'mustafa'
+  description = 'Cambridge Engineering student writing about hardware design'
+  css = ['css/custom.css']
+
+[[menu.main]]
+  name = 'Home'
+  url = '/'
+  weight = 1
+
+[[menu.main]]
+  name = 'Blog'
+  url = '/posts/'
+  weight = 2
+
+[[menu.main]]
+  name = 'About'
+  url = '/about/'
+  weight = 3
