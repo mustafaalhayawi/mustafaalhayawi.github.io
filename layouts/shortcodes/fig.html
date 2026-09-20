@@ -1,0 +1,6 @@
+<figure class="post-figure">
+  <img src="{{ .Get "src" }}" alt="{{ .Get "alt" }}">
+  {{ with .Get "caption" }}
+  <figcaption>{{ . }}</figcaption>
+  {{ end }}
+</figure>

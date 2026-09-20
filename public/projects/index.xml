@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on Mustafa Al Hayawi</title>
+    <link>http://localhost:1313/projects/</link>
+    <description>Recent content in Projects on Mustafa Al Hayawi</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 20 Sep 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/projects/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Intel 8080 Emulator</title>
+      <link>http://localhost:1313/projects/intel-8080/</link>
+      <pubDate>Sun, 20 Sep 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/projects/intel-8080/</guid>
+      <description>project writeup to be written&amp;hellip;</description>
+    </item>
+    <item>
+      <title>Mustafa3D</title>
+      <link>http://localhost:1313/projects/mustafa3d/</link>
+      <pubDate>Thu, 19 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/projects/mustafa3d/</guid>
+      <description>project writeup to be written&amp;hellip;</description>
+    </item>
+  </channel>
+</rss>

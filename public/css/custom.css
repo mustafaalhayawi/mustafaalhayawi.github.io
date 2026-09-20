@@ -1,3 +1,98 @@
 #header #nav {
     font-size: 15px;
 }
+
+.post {
+    margin-top: 2rem;
+}
+
+.post h1.posttitle,
+.post h2.posttitle {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.post-figure {
+    margin: 2rem 0;
+}
+
+.post-figure img {
+    border-radius: 4px;
+    width: 100% !important;
+    max-width: 500px !important;
+    display: block;
+    margin: 0 auto;
+}
+
+.post-figure figcaption {
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    font-size: 0.9rem;
+    max-width: 85%;
+    margin: 0.5rem auto 0 auto;
+}
+
+.project-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    text-decoration: none;
+    margin-bottom: 2rem;
+    background-image: none !important;
+    border: none !important;
+}
+
+.project-row img {
+    width: 80px;
+    height: auto;
+    flex-shrink: 0;
+    border-radius: 4px;
+}
+
+.project-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.project-info h3 {
+    margin: 0 0 0.5rem 0;
+}
+
+.project-info p {
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .project-row {
+        gap: 1rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding-left: 0;
+    }
+
+    #header #nav {
+        width: 100%;
+        text-align: left;
+    }
+
+    #header #nav ul {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    #header #nav ul li {
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+        text-align: left !important;
+    }
+}

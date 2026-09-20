@@ -1,11 +1,33 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Mustafa Al Hayawi</title>
+    <title>Home on Mustafa Al Hayawi</title>
     <link>http://localhost:1313/</link>
-    <description>Recent content on Mustafa Al Hayawi</description>
+    <description>Recent content in Home on Mustafa Al Hayawi</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
+    <lastBuildDate>Sun, 20 Sep 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Emulating the Intel 8080 to play space invaders</title>
+      <link>http://localhost:1313/posts/intel-8080/</link>
+      <pubDate>Sun, 20 Sep 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/intel-8080/</guid>
+      <description>project write-up to be written&amp;hellip;</description>
+    </item>
+    <item>
+      <title>Building a 3D graphics engine in C&#43;&#43; from first-principles</title>
+      <link>http://localhost:1313/posts/mustafa3d/</link>
+      <pubDate>Thu, 19 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/mustafa3d/</guid>
+      <description>project write-up to be written&amp;hellip;</description>
+    </item>
+    <item>
+      <title>About</title>
+      <link>http://localhost:1313/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/about/</guid>
+      <description>I enjoy building things from first principles. I am interested in electrical and computer engineering, specifically silicon design, hardware and microprocessors and am excited to learn about other areas within computer engineering. I will use this page to document my projects and interest in hardware.&#xA;I studied at King&amp;rsquo;s Maths School between 2024-2026, a specialist mathematics school for 16-18 year olds in London ran in partnership with King&amp;rsquo;s College London. Currently, I am a first-year undergraduate studying engineering at the University of Cambridge and a member of Churchill College.</description>
+    </item>
   </channel>
 </rss>
