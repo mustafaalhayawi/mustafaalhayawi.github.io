@@ -43,6 +43,39 @@
 
 
   
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    
+    document.querySelectorAll("pre code.language-mermaid").forEach(function (codeBlock) {
+      let preTag = codeBlock.closest("pre");
+      let div = document.createElement("div");
+      div.className = "mermaid";
+      div.textContent = codeBlock.textContent;
+      preTag.parentNode.replaceChild(div, preTag);
+    });
+
+    
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    mermaid.run();
+  });
+</script>
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous">
+
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
+      ]
+    });">
+</script>
 </head>
 
 <body class="max-width mx-auto px3 ltr">
@@ -83,17 +116,6 @@
     
     
     <h2>2026</h2>
-    
-    <li class="post-item">
-      <div class="meta">
-        <time datetime="2026-09-20 00:00:00 &#43;0000 UTC" itemprop="datePublished">2026-09-20</time>
-      </div>
-      <span>    
-        <a class="" href="http://localhost:1313/posts/intel-8080/"> Emulating the Intel 8080 to play space invaders </a>
-      </span>
-    </li>
-    
-    
     
     <li class="post-item">
       <div class="meta">

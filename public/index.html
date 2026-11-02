@@ -44,6 +44,39 @@
 
 
   
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    
+    document.querySelectorAll("pre code.language-mermaid").forEach(function (codeBlock) {
+      let preTag = codeBlock.closest("pre");
+      let div = document.createElement("div");
+      div.className = "mermaid";
+      div.textContent = codeBlock.textContent;
+      preTag.parentNode.replaceChild(div, preTag);
+    });
+
+    
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    mermaid.run();
+  });
+</script>
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous">
+
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
+      ]
+    });">
+</script>
 </head>
 
 <body class="max-width mx-auto px3 ltr">
@@ -82,16 +115,6 @@
     <section id="projects">
         <span class="h1">Projects</span>
         <div class="project-list">
-            
-                
-                <a href="http://localhost:1313/posts/intel-8080/" class="project-row">
-                    <img src="/images/8080_thumb.jpg" alt="Emulating the Intel 8080 to play space invaders">
-                    <div class="project-info">
-                        <h3>Intel 8080 Emulator</h3>
-                        <p>A cycle-accurate CPU emulator of the Intel 8080 written in C&#43;&#43;</p>
-                    </div>
-                </a>
-                
             
                 
                 <a href="http://localhost:1313/posts/mustafa3d/" class="project-row">

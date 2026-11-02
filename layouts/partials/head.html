@@ -42,4 +42,37 @@
     {{ printf `<link href="%s" rel="%s" type="%s" title="%s" />` .Permalink .Rel .MediaType.Type $.Site.Title | safeHTML }}
   {{ end }}
   {{ end }}
+<!-- Load Mermaid.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Convert <pre><code class="language-mermaid"> into <div class="mermaid">
+    document.querySelectorAll("pre code.language-mermaid").forEach(function (codeBlock) {
+      let preTag = codeBlock.closest("pre");
+      let div = document.createElement("div");
+      div.className = "mermaid";
+      div.textContent = codeBlock.textContent;
+      preTag.parentNode.replaceChild(div, preTag);
+    });
+
+    // Initialize and render the diagrams
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    mermaid.run();
+  });
+</script>
+    <!-- KaTeX CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous">
+
+<!-- KaTeX Auto-Render Extension -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
+      ]
+    });">
+</script>
 </head>

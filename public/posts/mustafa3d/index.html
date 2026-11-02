@@ -45,6 +45,39 @@
 
 
   
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    
+    document.querySelectorAll("pre code.language-mermaid").forEach(function (codeBlock) {
+      let preTag = codeBlock.closest("pre");
+      let div = document.createElement("div");
+      div.className = "mermaid";
+      div.textContent = codeBlock.textContent;
+      preTag.parentNode.replaceChild(div, preTag);
+    });
+
+    
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    mermaid.run();
+  });
+</script>
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous">
+
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
+      ]
+    });">
+</script>
 </head>
 
 <body class="max-width mx-auto px3 ltr">
@@ -89,7 +122,289 @@
     </header>
     
     <div class="content" itemprop="articleBody">
-      <p>project write-up to be written&hellip;</p>
+      <h2 id="introduction">Introduction</h2>
+<p>Over the past few months I&rsquo;ve been working on a 3D graphics engine from scratch in C++. In December, I came across <a href="https://www.a1k0n.net/2011/07/20/donut-math.html"><code>donut.c</code></a> (an ASCII rendering of a spinning donut) and wanted to learn how it worked so I implemented it in Python and then in C++. This is how it works:</p>
+<ol>
+<li>Create a circle of points and rotate the circle around a point to create a donut in 3D space</li>
+<li>Rotate the donut by applying rotation matrices to the points</li>
+<li>Use projection maths to create a z-buffer</li>
+<li>Use the dot product to calculate lighting</li>
+</ol>
+<p>And then you have a spinning donut in ASCII.
+<figure class="post-figure">
+  <img src="/images/mustafa3d/donutc.gif" alt="ASCII rendering of a spinning donut">
+  
+</figure>
+
+I extended this by changing the shade of a character instead of using different characters depending on how lit a point is, added more objects to render in addition to the donut, and created a moveable camera. The end result was satisfying but naturally I wanted to take it further by using the same concepts but varying pixels instead of characters, implementing colours, somewhat realistic shading, loading .obj files to render more interesting 3D models, rendering textures and so on. You can see the end result below:
+<figure class="post-figure">
+  <img src="/images/mustafa3d/endresult.gif" alt="">
+  
+</figure>
+</p>
+<h2 id="architectural-design">Architectural design</h2>
+<p>I realised Python was getting too slow even with the ASCII rendering, and since rendering individual pixels is more computationally intensive I opted to use C++. When searching for a graphics library all I needed was the ability to alter individual pixels, and access the keyboard and mouse, so I came across SDL3 and its extensive documentation convinced me to use it. Since SDL3 handles only the low-level window creation and input, everything beyond raw pixel manipulation was built from scratch. This gave me lots of freedom with the architectural design and implementation of the engine. Below is the architecture diagram of the project.</p>
+<pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">%%{init: {
+  &#34;flowchart&#34;: {
+    &#34;defaultRenderer&#34;: &#34;elk&#34;,
+    &#34;curve&#34;: &#34;stepBefore&#34;
+  },
+  &#34;elk&#34;: {
+    &#34;nodePlacementAlignment&#34;: &#34;BALANCED&#34;
+  }
+}}%%
+flowchart TD
+    Geometry --&gt; Texture
+    Geometry --&gt; Material
+    Geometry --&gt; MathUtils
+    Geometry --&gt; Mesh
+    
+    Texture --&gt; Material
+    Material --&gt; Mesh
+    Material --&gt; ObjLoader
+    
+    MathUtils --&gt; Camera
+    MathUtils --&gt; Entity
+    MathUtils --&gt; Primitives
+    MathUtils --&gt; ObjLoader
+    MathUtils --&gt; Renderer
+    
+    Window --&gt; Camera
+    Window --&gt; Main
+    
+    Camera --&gt; Renderer
+    Camera --&gt; Main
+    
+    Mesh --&gt; Entity
+    Mesh --&gt; Primitives
+    Mesh --&gt; ObjLoader
+    Mesh --&gt; Renderer
+    
+    Entity --&gt; Renderer
+    Primitives --&gt; Renderer
+    ObjLoader --&gt; Renderer
+    Renderer --&gt; Main
+</code></pre><h3 id="main-function">Main function</h3>
+<p>The <code>main</code> function sets up the window, camera and renderer. It also runs the loop that handles inputs, renders the frame, and presents it while maintaining a target FPS while the program is open.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> argv[]) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>SDL_Init(SDL_INIT_VIDEO <span style="color:#f92672">|</span> SDL_INIT_EVENTS)) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Window window(<span style="color:#e6db74">&#34;Mustafa3D&#34;</span>, WINDOW_WIDTH, WINDOW_HEIGHT);
+</span></span><span style="display:flex;"><span>	Camera camera(CAMERA_POSITION, <span style="color:#ae81ff">0.0f</span>, <span style="color:#ae81ff">0.0f</span>, FOV);
+</span></span><span style="display:flex;"><span>	Renderer renderer(WINDOW_WIDTH, WINDOW_HEIGHT, camera, LIGHT_SOURCE);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	runLoop(window, renderer);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	SDL_Quit();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>The <code>main</code> function is intentionally simple and unless altering window and camera settings, it won&rsquo;t be modified often.</p>
+<h3 id="renderer">Renderer</h3>
+<p>Within the <code>Renderer</code> class exists a method <code>render</code> where the user can create entities within the world and modify their position and orientation. The <code>render</code> method also takes in a <code>deltaTime</code> (the time elapsed between the last two frames) which allows for motion in the simulation to be synced with real-world time, regardless of the simulation FPS. <code>Renderer</code> also contains other methods that handle colours (<code>applyIntensity</code>, <code>combineColours</code>, <code>packColours</code>) as well as methods that draw things on the screen (<code>drawTriangle</code>, <code>drawWireMesh</code> <code>drawMesh</code> and <code>drawLine</code>).</p>
+<h3 id="camera">Camera</h3>
+<p>The <code>Camera</code> class handles the camera&rsquo;s position and orientation through user inputs, as well as converting 3D coordinates in the world to positions on the 2D screen through projection maths. <code>Camera</code> is passed into the <code>Renderer</code> which means that you could theoretically change the <code>Camera</code> while rendering since <code>Renderer</code> takes in a <code>Camera</code> as a class variable.</p>
+<h3 id="window">Window</h3>
+<p>The <code>Window</code> class handles user inputs and presents the frame to the user by taking in a <code>int* frameBuffer</code> (a pointer to the 1D array containing all the pixels in the screen). The keyboard inputs are detached into a <code>MovementKeys&amp; movementKeys</code> that the <code>Window</code> updates through the <code>handleEvents</code> method. This allows for flexible use of the keyboard inputs where they are needed, for example modifying the camera&rsquo;s position or with a few extra lines of code to update entities and other states within the simulation too.</p>
+<h3 id="entity-and-meshes">Entity and meshes</h3>
+<p><code>Entity</code> represents a particular object within the world in the memory. It takes in a <code>const Mesh* mesh</code> which consists of vertices and triangles that represent the model itself, unrelated to its position and orientation within the world. <code>Entity</code> also contains a <code>worldMesh</code> which contains <code>std::vector&lt;Vertex&gt; vertices</code> that represent the object within the world. When the position and orientation of the object need to be updated, <code>worldMesh</code> is altered. This is memory-intensive however, and a less memory-intensive although more computationally-intensive approach would be to not store the object&rsquo;s <code>worldMesh</code> and instead apply transformations (based on position and rotation vectors) to the mesh every frame.</p>
+<p>I also created a <code>Primitives</code> class which currently contains a method to generate the mesh of a cube of a custom size. For now it only supports the cube, but it would be an easy implementation to add other primitive 3D shapes such as spheres, pyramids, etc.</p>
+<p>Currently the size of an entity is determined by the mesh, i.e. it is not possible to change an entities size once it has been created (unless you give it a new mesh). A nicer way of implementing this would be to move the <code>size</code> property from being a part of the mesh to a property of the entity, allowing the <code>size</code> to be modified like in game engines such as Unity.</p>
+<h3 id="texture">Texture</h3>
+<p>The <code>Texture</code> class lets an image of an object&rsquo;s texture to be loaded, and provides a method for getting the colour on a particular point on the object using UV mapping. The <code>Material</code> class includes a <code>Texture* diffuseMap</code> as well as more material properties such as ambient, diffuse, specular, and shininess.</p>
+<h3 id="file-loading">File loading</h3>
+<p>3D models can be loaded (.obj files) by using the <code>loadMesh</code> function that takes in a pointer to a mesh, and loads the mesh onto it. A 3D model in .obj format is represented through vertices, vertex normals, vertex UV coordinates, and face mappings. This data is read, loaded and compiled into a mesh which includes a material that has a texture if one is given.</p>
+<h3 id="utilities">Utilities</h3>
+<p>Maths utilities are provided through the <code>MathUtils</code> and <code>Geometry</code> files which allow for vector operations (2D and 3D) as well as defining a <code>ScreenPosition</code> data structure which appears to be a 3D vector.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">ScreenPosition</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> x, y;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">float</span> z;
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p><code>ScreenPosition</code> is used to represent the position of a particular pixel on the screen, however it also includes a <code>float z</code> which is used to represent the distance to that point in the world, allowing for simpler projection maths where both a point&rsquo;s screen coordinates and z-values are required.</p>
+<h2 id="rasterisation">Rasterisation</h2>
+<p>The main logic of the renderer lies within the <code>drawTriangle</code> method. It takes in 3 vertices in the world and draws on the screen the triangle that is formed by those 3 vertices. The implementation of this <code>drawTriangle</code> method varied throughout the project as different implementations had their pros and cons.</p>
+<p>I began by using a bounding box to draw triangles. First, we use the camera&rsquo;s <code>spaceToScreen</code> method to turn the points in the 3D world into coordinates on the screen using projection maths. Then we can simply find the minimum x and y, and the maximum x and y coordinates to create a bounding box which is the smallest rectangle that encapsulates our triangle on the screen as shown below.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/boundingbox.png" alt="">
+  
+  <figcaption>Each cell represents a pixel on the screen, to check if a pixel lies in the triangle, we check if its centre lies in the triangle</figcaption>
+  
+</figure>
+
+<p>Once we have a bounding box defined, we are able to iterate over every pixel within that bounding box to determine whether it&rsquo;s centre lies in our triangle. We do this using barycentric coordinates which let us define any point $P$ in or on the triangle using the equation:</p>
+<p>$$
+P=uA+vB+wC
+$$
+where A, B, and C are the vertices of the triangle, and $u$, $v$, $w$ are our barycentric coordinates. We can obtain the coordinates using the following equations:</p>
+<p>$$
+u=\frac{[\triangle BCP]}{[\triangle ABC]}, v=\frac{[\triangle CAP]}{[\triangle ABC]}, w=\frac{[\triangle ABP]}{[\triangle ABC]}
+$$
+We are relying on signed areas, which gives a positive value if the points are in anticlockwise order, and a negative value if they are in clockwise order. If the point $P$ lies within our triangle, then $0\le u,v,w\le1$, which means if any of our coordinates are less than 0 or greater than 1 we can determine that the point does not lie within the triangle. This is especially useful in computer graphics, for instance we can now iterate through every pixel in our bounding box to determine whether it lies in our triangle.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/barycentric.png" alt="">
+  
+</figure>
+
+<p>This method of using a bounding box and barycentric coordinates is easy to implement but computationally intensive as we are checking whether points are in the triangle, when they aren&rsquo;t. I noticed this and decided to pivot into scanline rasterisation instead. Instead of creating a bounding box, we split the triangle into two triangles: a bottom half and a top half. Then we can use horizontal edge steps to find where the triangle edges land on each next scanline. And to interpolate the z-values, we use horizontal and vertical depth steps. With the addition of some upfront calculation, we have ensured that we are looping over pixels that we know are in the triangle.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/scanlinerasterisation.png" alt="">
+  
+  <figcaption>This shows a triangle split such that it has an upper triangle whose bottom side is horizontal, and a lower triangle whose top side is horizontal too</figcaption>
+  
+</figure>
+
+<p>Scanline rasterisation was working great until later on when I needed to interpolate more values where it became increasingly difficult to manage. With the addition of phong lighting and texture mapping, I had to interpolate the normals of the vertices along the triangle, as well as the UV coordinates too. Interpolating this many variables with scanline rasterisation manually would lead to a horrifying block of code that would involve keeping track of several presteps, steps, etc. Looking back, I could&rsquo;ve implemented a class that includes all the values that need interpolation, and instead of interpolating each individual value, we interpolate the instance of the class, which includes all the values, perhaps a more elegant solution. Having not noticed this when developing, I painfully pivoted back to using bounding-box tile rasterisation which led to a small performance drop of the engine, but made it easier to keep adding features to the engine, the next of which was shading.</p>
+<h2 id="shading">Shading</h2>
+<p>The project began with rotating cubes with no light source or shading which meant the cubes looked very flat, and not 3D at all without including the wireframe, which gave the illusion of 3D to some extent.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/noshading.png" alt="">
+  
+</figure>
+
+<p>An easy way to add lighting would be to implement flat shading. We give each face in the model a normal vector (e.g. $\mathbf{\hat{n}}$), and define a normalised light vector (e.g. $\mathbf{\hat{l}}$) in the world. We then take the dot product of both vectors to determine the shade of that particular face. Because our normal vectors are unit vectors, our dot product is defined as:
+$$
+\mathbf{\hat{n}}\cdot\mathbf{\hat{l}}=|\mathbf{\hat{n}}||\mathbf{\hat{l}}|\cos \theta=\cos \theta
+$$
+Therefore, the dot product varies between 1 when the vectors have the same direction, 0 when they are orthogonal, and -1 when they have opposite directions. When dot product evaluates to 0 or less, we give that face the darkest possible shade to indicate the lack of light on that face, and likewise when the dot product is positive we give the face a shade proportional to the value of the dot product, i.e. the more a face is pointing towards the light, the more lit that face would be.</p>
+<p>Flat shading works well for cubes which lack curved faces, or in an intentionally low-poly graphics engine, perhaps something retro-style. However, as I had planned on loading complex models such as monkey heads, this method was not sufficient, and would lead to low-poly renders as shown below:</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/flatmonkey.png" alt="">
+  
+</figure>
+
+<p>There are several other shading algorithms that support shading a smooth surface, and the one I used was Phong shading. In Phong shading, instead of giving each face a normal vector, we give each vertex in each face a normal vector. Since we are using .obj files, we cannot perfectly represent curved surfaces in data, and instead we rely on the triangulation of the 3D model to be able to represent it in a file. To make each triangle in the model curved instead of flat, we interpolate normals along the triangle using barycentric coordinates as weightings of each vertex normal.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/phongshading.png" alt="">
+  
+</figure>
+
+<p>As shown in the image above, if a point has barycentric coordinates $(u, v, w)$ then we can represent the interpolated normal as:
+$$
+N_I=wN_1+uN_2+vN_3
+$$
+Now that we are able to interpolate normals at any point on a triangle, instead of having a per-face shading calculation, we will have a per-pixel shading calculation. In other words, we are able to calculate shading at every pixel, instead of every face, leading to much more realistic rendering. By rendering per-pixel, we are able to render finer details of diffuse and specular reflection (shown in the image below).</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/reflection.png" alt="">
+  
+</figure>
+
+<p>First we calculate the <code>diffuseIntensity</code>, a value from 0 to 1 (inclusive), using the interpolated normal, the light direction, and add that to our ambient intensity (while bounding between 0 and 1). The ambient intensity is the minimum light intensity in our world, to ensure that triangles facing away from the light source are still visible and not black.</p>
+<p>Then we access the triangle&rsquo;s material (all the pixels in the triangle have the same material), and get the colour at that specific pixel, either a constant colour if the material has no texture, or from the diffuse map if it does (explained in the later Textures chapter).</p>
+<p>We then apply the diffuse intensity to this colour, the specular intensity to the specular colour (which is currently defaulted to white, as we are using white light), and combine the two to obtain a final colour, representing the colour at that pixel and update the frame buffer accordingly.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">uint32_t</span> shadedColor <span style="color:#f92672">=</span> applyIntensity(packColor(color), diffuseIntensity);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">uint32_t</span> specularColor <span style="color:#f92672">=</span> applyIntensity(<span style="color:#ae81ff">0xFFFFFFFF</span>, specularIntensity);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">uint32_t</span> finalColor <span style="color:#f92672">=</span> combineColours(shadedColor, specularColor);
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>m_frameBuffer[idx <span style="color:#f92672">+</span> P.x] <span style="color:#f92672">=</span> finalColor;
+</span></span></code></pre></div><figure class="post-figure">
+  <img src="/images/mustafa3d/phongcomponents.png" alt="">
+  
+</figure>
+
+<p>Our graphics engine has implemented Phong reflection in arguably its simplest form, using only a single light with a single colour. In a real-world use of the graphics engine, there will likely be multiple light sources, perhaps each with a different colour, causing interesting light interactions.</p>
+<p>With a single light source we used the equation
+$$E=E_A+E_D+E_S$$
+($E_A$, $E_D$, $E_S$ representing ambient, diffuse and specular components of light). However with multiple light sources we simply tweak our equation to
+$$E=E_A+\sum_i(E_D+E_S)$$
+where we are now calculating the diffuse and specular components contributed from each light source, and combine them with our constant ambient intensity to produce the final colour for a pixel.</p>
+<p>Additionally, there are various types of light sources, mainly directional, point and spotlight as illustrated in the diagram below. In our engine we have so far implemented directional lighting only, since we are representing light simply as a direction vector. Directional lighting works well for representing a light source such as the sun, but is insufficient for other sources such as a light bulb.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/lighttypes.png" alt="">
+  
+</figure>
+
+<p>To implement a point light, instead of defining it as a direction vector (like we did with the directional light), we define it using a position vector as the name implies. This way we are able to find the direction vector pointing from a particular point on a model to the point light. In the real world, point lights follow an inverse-square law, getting dimmer as you move further away, and to implement this we could calculate the distance between the point light and the point on the model, and use an inverse-square equation to give the light intensity due to that point light.</p>
+<p>A spotlight is essentially a hybrid of the directional and point lights we have discussed. In addition to a position and direction vector, it also is defined by one (or two) cone angles. These cone angles define the angle of the cone in which light reaches from the spotlight. If we used a single cone angle and hence a single cone, we would obtain a harsh light, where objects are lit up brightly under the spotlight but as soon as you cross out of the cone of the spotlight, they are no longer lit up. By defining an extra angle, we can have an inner cone where the light is the brightest, and an outer cone where the light fades from bright to dark, as shown in the image below showing the light intensity due to the spotlight that is shining directly down.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/spotlight.png" alt="">
+  
+</figure>
+
+<p>By implementing various types of light sources, having the ability to include multiple in a scene, and using various colours, we are able to create somewhat realistic scenes, to an extent. Where the Phong shading algorithm fails is that it is a local illumination technique, in other words it only considers a point being lit, and what it is being lit by, and nothing else in the world. This means by solely using the Phong shading algorithm, we are unable to cast shadows, or create mirrors. There are ways to overcome these limitations to extend the Phong shading algorithm, but at the cost of FPS.</p>
+<h2 id="asset-loading">Asset loading</h2>
+<p>Loading .obj files turned out to be quite pleasant, since the way a model is formatted translates well into my data representation of a model&rsquo;s mesh which essentially consists of vertices and triangles.</p>
+<p>A .obj file is a list of definitions, each defining either a vertex position, vertex normal, vertex texture coordinate (which is discussed in the next section), or a face, as shown below:</p>
+<ul>
+<li><code>v</code> defines a vertex&rsquo;s position, followed by three floats denoting the x, y, and z values</li>
+<li><code>vn</code> defines a vertex&rsquo;s normal (a direction vector), followed by three floats</li>
+<li><code>vt</code> defines a vertex&rsquo;s texture coordinates (s or uv coordinates), followed by 2 floats</li>
+<li><code>f</code> defines a face</li>
+</ul>
+<p>In a model it is optional whether to define vertex normals, because if they aren&rsquo;t defined we can create a plane of the triangle formed by the three vertices of a particular face, and calculate its normal such that the vertices are in anti-clockwise order, and assign that as the vertex normal to the triangle&rsquo;s vertices.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/objfacenormal.png" alt="">
+  
+  <figcaption>By calculating the face normal and knowing the normal is the same throughout the plane, we assign that same normal to each vertex</figcaption>
+  
+</figure>
+
+<p>A face can be defined in multiple ways, but in every case the position of the vertices are given. Including the texture coordinates and vertex normals is optional, but the definition changes depending on which one you follow:</p>
+<ul>
+<li>given only vertices, use <code>f v1 v2 v3 ...</code></li>
+<li>when including texture coordinates too, use <code>f v1/vt1 v2/vt2 v3/vt3 ...</code></li>
+<li>including both texture coordinates and normal vertices use <code>f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3 ...</code></li>
+<li>including only vertices and their normals, use <code>f v1//vn1 v2//vn2 v3//vn3 ...</code></li>
+</ul>
+<p>Since a .obj file consists of lines of definitions, it is possible to define various faces in a model in different ways, for example defining a face with no vertex normals, and another with vertex normals. Unless you were trying to hyper-optimise on file size, this is quite uncommon, though its fun to know. Additionally a face does not necessarily need to have exactly 3 vertices, it could have more since all a face represents is a polygon in the mesh, although in most cases a model would be triangulated upon being exported, another practically useless but interesting feature of .obj files.</p>
+<p>To implement this I read the .obj file line by line, obtaining the prefix of a definition (either <code>f</code>, <code>v</code>, <code>vn</code>, or <code>vt</code>), storing all of the vertex positions, normals and texture coordinates in arrays. We then define the mesh by appending all the vertices to a 1D array. A mesh vertex contains a <code>position</code>, <code>normal</code>, and <code>uv</code> (which is optional if there&rsquo;s no texture).</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Vertex</span> {
+</span></span><span style="display:flex;"><span>	Vector3 position <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span> };
+</span></span><span style="display:flex;"><span>	Vector3 normal <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span> };
+</span></span><span style="display:flex;"><span>	Vector2 uv <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span> };
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>Then to define faces I used a <code>struct Triangle</code> which consists of the indices of that triangle&rsquo;s vertices in the vertices array. This is to save on memory so we are not storing vertices in memory multiple times, and using indices makes it easy to access vertices, and allow for multiple faces to share vertices.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Triangle</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> vertex1, vertex2, vertex3;
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>If a face is not given vertex normals, I obtained the direction vectors of two adjacent edges of the polygon, and calculated the normal using a cross product.</p>
+<p>Then once the mesh has been created we create a material. The values ambient, diffuse, specular, and shininess are hardcoded since .obj files do not support these values directly as they only define the geometry of a model, although we can use a .mtl (Material Template Library) file to support custom values. The material is also given a texture, if a file name for one has been given.</p>
+<h2 id="textures">Textures</h2>
+<p>To implement textures in a graphics engine we need three things: the ability to store texture coordinates in a vertex, find the colour of a point given its texture coordinates, and storing the texture&rsquo;s pixels.</p>
+<p>As shown previously, the <code>struct Vertex</code> defines the UV (texture coordinates) with <code>Vector2 uv = { 0, 0 }</code>. The term letters U and V in &ldquo;UV&rdquo; denote the horizontal and vertical axes of a 2D texture, since 3D space already uses x, y, and z. U, V values are bounded between 0 and 1 (inclusive) to make texture mapping resolution-independent.</p>
+<p>We create a function method within the <code>Texture</code> class called <code>getColor</code> which takes in UV coordinates (<code>float u</code>, <code>float v</code>) and returns a vector consisting of 3 values (red, green, and blue) denoting the colour at that coordinate on the texture map. We do this by converting our UV coordinates into pixel coordinates on the texture map as below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> x <span style="color:#f92672">=</span> (<span style="color:#66d9ef">int</span>)(u <span style="color:#f92672">*</span> (m_width <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>));
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> y <span style="color:#f92672">=</span> (<span style="color:#66d9ef">int</span>)(v <span style="color:#f92672">*</span> (m_height <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>)); 
+</span></span></code></pre></div><p>and then we obtain the RGB values at that coordinate, and return it.</p>
+<p>And to store the texture map&rsquo;s pixels we use a 1D array that has a length equal to the product of the texture map&rsquo;s height and width. Each represented pixel in the array consists of 3 bytes, one for each channel (red, green, and blue).</p>
+<p>Texture mapping allows us to map a 2D texture onto a 3D object, and by interpolating the texture coordinates across a triangle&rsquo;s face, we can make a seemingly perfect fit as shown below.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/texturemapping.png" alt="">
+  
+</figure>
+
+<h2 id="camera-1">Camera</h2>
+<p>To define the camera at any given point, we require its position, pitch, yaw, and FOV (field of view). Since the FOV is constant as its value is hardcoded, the camera has 5 degrees of freedom, 3 from its position (x, y, and z) and another 2 from rotation (pitch and yaw). I could&rsquo;ve added roll too but it wouldn&rsquo;t make sense for a camera in this context. Pitch, yaw, and roll define the rotational axes in 3D space as shown below.</p>
+<figure class="post-figure">
+  <img src="/images/mustafa3d/pitchrollyaw.png" alt="">
+  
+</figure>
+
+<p>Once we have included rotation, moving the camera isn&rsquo;t as simple as changing the x, y, or z values. Since moving forwards, backwards, left, and right would affect both the x and z components of position (not y because the camera cannot roll). Therefore, we update the position of the camera (when moving other than vertically) using the following functions</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> Camera<span style="color:#f92672">::</span>strafeRight(<span style="color:#66d9ef">float</span> distance) {
+</span></span><span style="display:flex;"><span>	position.x <span style="color:#f92672">+=</span> m_cosYaw <span style="color:#f92672">*</span> distance;
+</span></span><span style="display:flex;"><span>	position.z <span style="color:#f92672">-=</span> m_sinYaw <span style="color:#f92672">*</span> distance;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> Camera<span style="color:#f92672">::</span>moveForward(<span style="color:#66d9ef">float</span> distance) {
+</span></span><span style="display:flex;"><span>	position.x <span style="color:#f92672">+=</span> m_sinYaw <span style="color:#f92672">*</span> distance;
+</span></span><span style="display:flex;"><span>	position.z <span style="color:#f92672">+=</span> m_cosYaw <span style="color:#f92672">*</span> distance;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>And since the rotation does not affect the vertical movement of the camera, the method is defined intuitively as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> Camera<span style="color:#f92672">::</span>moveVertical(<span style="color:#66d9ef">float</span> distance) {
+</span></span><span style="display:flex;"><span>	position.y <span style="color:#f92672">+=</span> distance;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="conclusion">Conclusion</h2>
+<p>Working on this project has been an enjoyable experience full of satisfying and frustrating moments which both equally led to some insightful engineering realisations throughout. I tried to make the code as modular as possible when developing, that way features could be added, removed, or edited easily without affecting the rest of the code. It is exciting to consider where this project could be headed if I work on it more, although it will remain a hobby project that is dwarfed in comparison to game/graphics engines such as Unreal, Unity, Godot, etc. If you have read this far, thank you for reading, I hope you found this project as interesting to read about as I found it interesting to develop and write about.</p>
+<h2 id="attributions">Attributions</h2>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/File:Phong_components_version_4.png">Phong components</a></li>
+<li><a href="https://commons.wikimedia.org/wiki/File:Lambert2.svg">Reflection diagram</a></li>
+<li><a href="https://commons.wikimedia.org/wiki/File:UVMapping.png">Texture mapping demonstration</a></li>
+<li><a href="https://commons.wikimedia.org/wiki/File:Yaw_Axis_Corrected.svg">Rotational axes diagram</a></li>
+</ul>
 
     </div>
   </article>

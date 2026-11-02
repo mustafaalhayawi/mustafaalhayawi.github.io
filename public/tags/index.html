@@ -43,6 +43,39 @@
 
 
   
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    
+    document.querySelectorAll("pre code.language-mermaid").forEach(function (codeBlock) {
+      let preTag = codeBlock.closest("pre");
+      let div = document.createElement("div");
+      div.className = "mermaid";
+      div.textContent = codeBlock.textContent;
+      preTag.parentNode.replaceChild(div, preTag);
+    });
+
+    
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    mermaid.run();
+  });
+</script>
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous">
+
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
+      ]
+    });">
+</script>
 </head>
 
 <body class="max-width mx-auto px3 ltr">

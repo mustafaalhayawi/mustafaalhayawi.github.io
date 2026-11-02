@@ -14,8 +14,13 @@ Over the past few months I've been working on a 3D graphics engine from scratch 
 
 And then you have a spinning donut in ASCII.
 {{< fig src="/images/mustafa3d/donutc.gif" alt="ASCII rendering of a spinning donut" >}}
-I extended this by changing the shade of a character instead of using different characters depending on how lit a point is, added more objects to render in addition to the donut, and created a moveable camera. The end result was satisfying but naturally I wanted to take it further by using the same concepts but varying pixels instead of characters, implementing colours, somewhat realistic shading, loading .obj files to render more interesting 3D models, rendering textures and so on.
+I extended this by changing the shade of a character instead of using different characters depending on how lit a point is, added more objects to render in addition to the donut, and created a moveable camera. The end result was satisfying but naturally I wanted to take it further by using the same concepts but varying pixels instead of characters, implementing colours, somewhat realistic shading, loading .obj files to render more interesting 3D models, rendering textures and so on. You can see the end result below:
+{{< fig src="/images/mustafa3d/endresult.gif" >}}
 ## Architectural design
+
+I realised Python was getting too slow even with the ASCII rendering, and since rendering individual pixels is more computationally intensive I opted to use C++. When searching for a graphics library all I needed was the ability to alter individual pixels, and access the keyboard and mouse, so I came across SDL3 and its extensive documentation convinced me to use it. Since SDL3 handles only the low-level window creation and input, everything beyond raw pixel manipulation was built from scratch. This gave me lots of freedom with the architectural design and implementation of the engine. Below is the architecture diagram of the project.
+
+
 ```mermaid
 %%{init: {
   "flowchart": {
@@ -58,9 +63,6 @@ flowchart TD
     ObjLoader --> Renderer
     Renderer --> Main
 ```
-I realised Python was getting too slow even with the ASCII rendering, and since rendering individual pixels is more computationally intensive I opted to use C++. When searching for a graphics library all I needed was the ability to alter individual pixels, and access the keyboard and mouse, so I came across SDL3 and its extensive documentation convinced me to use it. Since SDL3 handles only the low-level window creation and input, everything beyond raw pixel manipulation was built from scratch. This gave me lots of freedom with the architectural design and implementation of the engine. You can see the end result below:
-
-{{< fig src="/images/mustafa3d/endresult.gif" >}}
 ### Main function
 The `main` function sets up the window, camera and renderer. It also runs the loop that handles inputs, renders the frame, and presents it while maintaining a target FPS while the program is open.
 

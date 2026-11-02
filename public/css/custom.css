@@ -63,6 +63,79 @@
     margin: 0;
 }
 
+/* Completely remove the hashtag pseudo-element from headings */
+.post h1::before,
+.post h2::before,
+h1::before,
+h2::before {
+    content: none !important;
+    display: none !important;
+}
+
+/* Add a soft separator line underneath post h1 and h2 headings */
+.post h1,
+.post h2,
+h1.posttitle {
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 0.3rem;
+    margin-bottom: 1rem;
+}
+
+body, p, li, td {
+    line-height: 1.5; /* Decrease from default (usually 1.5 or higher) */
+    letter-spacing: -0.02em; /* Gives a tighter, cleaner character tracking */
+}
+
+/* Nicer inline code formatting */
+.post p code, 
+.post li code, 
+.content p code,
+.content li code {
+    background-color: rgba(125, 125, 125, 0.12);
+    border: 1px solid rgba(125, 125, 125, 0.2);
+    padding: 0.15em 0.35em;
+    border-radius: 4px;
+    font-size: 0.88em;
+    font-family: monospace;
+}
+
+/* Center Mermaid diagrams and their SVG outputs */
+.mermaid {
+    display: flex;
+    justify-content: center;
+    margin: 2rem auto;
+}
+
+.mermaid svg {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Ensure LaTeX math blocks look clean and centered */
+.katex-display {
+    margin: 1.5rem auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+pre {
+    background-color: #f6f8fa; /* A soft grey background */
+    border: 1px solid #e1e4e8; /* A faint, clean border */
+    border-radius: 6px;        /* Rounded corners */
+    padding: 1rem;             /* Comfortable inner spacing */
+    font-size: 0.9em;          /* Slightly compact code text */
+    overflow-x: auto;          /* Scrollbars for long code lines */
+    margin: 1.5rem 0;          /* Breathing room above and below */
+}
+
+pre code {
+    background-color: transparent; /* Removes nested background clutter */
+    padding: 0;
+    border: none;
+}
+
 @media (max-width: 600px) {
     .project-row {
         gap: 1rem;

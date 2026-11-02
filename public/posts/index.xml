@@ -6,21 +6,14 @@
     <description>Recent content in Posts on Mustafa Al Hayawi</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 20 Sep 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 19 Mar 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Emulating the Intel 8080 to play space invaders</title>
-      <link>http://localhost:1313/posts/intel-8080/</link>
-      <pubDate>Sun, 20 Sep 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/intel-8080/</guid>
-      <description>project write-up to be written&amp;hellip;</description>
-    </item>
     <item>
       <title>Building a 3D graphics engine in C&#43;&#43; from first-principles</title>
       <link>http://localhost:1313/posts/mustafa3d/</link>
       <pubDate>Thu, 19 Mar 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/posts/mustafa3d/</guid>
-      <description>project write-up to be written&amp;hellip;</description>
+      <description>Introduction Over the past few months I&amp;rsquo;ve been working on a 3D graphics engine from scratch in C++. In December, I came across donut.c (an ASCII rendering of a spinning donut) and wanted to learn how it worked so I implemented it in Python and then in C++. This is how it works:&#xA;Create a circle of points and rotate the circle around a point to create a donut in 3D space Rotate the donut by applying rotation matrices to the points Use projection maths to create a z-buffer Use the dot product to calculate lighting And then you have a spinning donut in ASCII.</description>
     </item>
   </channel>
 </rss>
